@@ -187,8 +187,8 @@ VITE_BASE_URL=http://localhost:3000
 ## 👩‍💻 Author
 
 **Supriya Mishra**
-- GitHub: [@supriya](https://github.com/your-github-username)
-- LinkedIn: [Supriya Mishra](https://linkedin.com/in/your-linkedin)
+- GitHub: [@supriya](https://github.com/Supriya0Mishra)
+- LinkedIn: https://www.linkedin.com/in/supriya-mishra-a32b4b251/
 
 ---
 
