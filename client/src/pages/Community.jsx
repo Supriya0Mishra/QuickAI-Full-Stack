@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { dummyPublishedCreationData } from '../assets/assets'
 import { Heart } from 'lucide-react'
 import axios from 'axios'
+import { getErrorMessage } from '../utils/apiError'
 import toast from 'react-hot-toast'
 
 
@@ -26,7 +27,7 @@ const Community = () => {
         toast.error(data.message)
       }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(getErrorMessage(error))
     }
     setLoading(false)
   }
@@ -44,7 +45,7 @@ const Community = () => {
         toast.error(data.message)
       }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(getErrorMessage(error))
     }
   }
 
