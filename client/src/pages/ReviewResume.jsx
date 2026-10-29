@@ -1,6 +1,7 @@
 import { FileText, Sparkles } from 'lucide-react';
 import React, { useState } from 'react'
 import axios from 'axios'
+import { getErrorMessage } from '../utils/apiError'
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
 import Markdown from 'react-markdown';
@@ -31,7 +32,7 @@ const ReviewResume = () => {
               toast.error(data.message)
             }
           } catch (error) {
-            toast.error(error.message)
+            toast.error(getErrorMessage(error))
           }
           setLoading(false)
         }

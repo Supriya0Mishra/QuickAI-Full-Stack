@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import toast from 'react-hot-toast'
 import Markdown from 'react-markdown'
 import axios from 'axios'
+import { getErrorMessage } from '../utils/apiError'
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -33,7 +34,7 @@ const BlogTitles = () => {
           toast.error(data.message)
          }
       } catch (error) {
-        toast.error(error.message)
+        toast.error(getErrorMessage(error))
       }
       setLoading(false)
     }
