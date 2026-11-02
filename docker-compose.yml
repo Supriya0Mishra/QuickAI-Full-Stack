@@ -1,0 +1,46 @@
+# Local development: FastAPI + Postgres (with pgvector).
+#   docker compose up --build
+# API: http://localhost:8000/health   Docs: http://localhost:8000/docs
+#
+# These credentials are for local development only. Production uses the
+# DATABASE_URL from your hosting provider (e.g. Neon).
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: quickai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quickai}
+      POSTGRES_DB: quickai
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quickai -d quickai"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    # Local dev: apply database migrations, then start the API.
+    # (In production, migrations run as a separate deploy step.)
+    # `exec` makes uvicorn replace the shell as PID 1, so it receives SIGTERM
+    # from `docker compose stop` and shuts down cleanly.
+    command: sh -c "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    env_file:
+      - path: ./api/.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://quickai:${POSTGRES_PASSWORD:-quickai}@db:5432/quickai
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      ENVIRONMENT: development
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
