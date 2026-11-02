@@ -5,15 +5,20 @@ description = "FastAPI backend for QuickAI"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.20.1",
+    "asyncpg>=0.32.0",
     "fastapi>=0.162.0",
+    "httpx>=0.28.1",
     "pydantic-settings>=2.16.2",
+    "pyjwt[crypto]>=2.15.1",
+    "sqlalchemy[asyncio]>=2.1.6",
     "uvicorn[standard]>=0.54.0",
 ]
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "pytest>=9.2.0",
+    "pytest-asyncio>=1.4.1",
     "ruff>=0.17.3",
 ]
 
@@ -28,6 +33,11 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+asyncio_mode = "auto"
+# One event loop for the whole run, so the database engine can be shared.
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+markers = ["db: needs a real Postgres (TEST_DATABASE_URL)"]
 filterwarnings = [
     # Starlette's TestClient warns about httpx; tests still use it on purpose.
     "ignore:Using `httpx` with `starlette.testclient`",
