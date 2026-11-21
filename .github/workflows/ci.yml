@@ -12,6 +12,25 @@ jobs:
     defaults:
       run:
         working-directory: api
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: quickai
+          POSTGRES_PASSWORD: quickai
+          POSTGRES_DB: quickai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U quickai -d quickai"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://quickai:quickai@localhost:5432/quickai
+      TEST_DATABASE_URL: postgresql+asyncpg://quickai:quickai@localhost:5432/quickai_test
+      # Database tests must run in CI, never silently skip.
+      REQUIRE_DB: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -23,8 +42,38 @@ jobs:
         run: uv run ruff check .
       - name: Check formatting
         run: uv run ruff format --check .
+      - name: Apply migrations
+        run: uv run alembic upgrade head
+      - name: Check models match migrations
+        run: uv run alembic check
       - name: Test
-        run: uv run pytest -q
+        run: uv run pytest -q -rs
+
+  docker:
+    name: Docker Compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start services
+        # --wait returns once every service's healthcheck passes.
+        run: docker compose up --build --detach --wait --wait-timeout 120
+      - name: Check API health
+        run: curl --fail --silent http://localhost:8000/health
+      - name: Check API can reach the database
+        run: curl --fail --silent http://localhost:8000/health/ready
+      - name: Check migrations ran (tables and pgvector exist)
+        run: |
+          docker compose exec -T db psql -U quickai -d quickai -tA \
+            -c "SELECT count(*) FROM information_schema.tables WHERE table_name IN ('creations','creation_likes','user_usage');" \
+            | grep -qx 3
+          docker compose exec -T db psql -U quickai -d quickai -tA \
+            -c "SELECT 1 FROM pg_extension WHERE extname = 'vector';" | grep -qx 1
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+      - name: Stop services
+        if: always()
+        run: docker compose down --volumes
 
   server:
     name: Server (Node, being replaced)

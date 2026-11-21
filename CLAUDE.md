@@ -22,6 +22,13 @@ until the client is switched over:
 
 - Keep each change small and focused on one task. Don't refactor unrelated code.
 - Validate all input with Pydantic models; never trust values from the client.
+- Database changes: edit the models in `api/app/models/`, then create a migration
+  with `uv run alembic revision --autogenerate -m "..."` and review it by hand.
+  Never edit a migration that has already been merged; add a new one.
+- Database tests run against real Postgres (never SQLite).
+- Protected routes take `user: Annotated[CurrentUser, Depends(get_current_user)]`.
+  Never read the user id from the request body or query; only from the verified token.
+  Don't weaken token checks (algorithm, issuer, expiry, azp) to make something work.
 - Add or update tests for every behavior change.
 - Before finishing, run the checks below and make sure they pass.
 - Never commit secrets. Real values go in `.env` files, which are git-ignored.
@@ -36,6 +43,10 @@ cd api
 uv run ruff check .
 uv run ruff format --check .
 uv run pytest
+
+# Docker (API + Postgres), from the repo root
+docker compose up --build --detach --wait
+docker compose down
 
 # Old server
 cd server && npm test
